@@ -9,7 +9,7 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        #map { height: 400px; border-radius: 0.5rem; }
+        #map { height: 432px; border-radius: 0.5rem; }
         .blink { animation: blinker 1s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
     </style>
@@ -87,7 +87,7 @@
             <!-- Event Log -->
             <div class="bg-gray-900 text-green-400 p-6 rounded-lg shadow-sm font-mono text-sm overflow-hidden flex flex-col h-[480px]">
                 <h2 class="text-lg font-bold text-white mb-2 border-b border-gray-700 pb-2">>_ SYSTEM EVENT LOG</h2>
-                <div id="event-log" class="overflow-y-auto flex-1 space-y-1 mt-2 flex flex-col-reverse">
+                <div id="event-log" class="overflow-y-auto flex-1 space-y-2 mt-2">
                     <div>[SYS] Initialization complete. Waiting for sensor handshake...</div>
                 </div>
             </div>
