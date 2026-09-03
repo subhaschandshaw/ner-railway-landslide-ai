@@ -89,7 +89,7 @@ import requests
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 
 @app.get("/api/predict-realtime")
-def predict_realtime():
+def predict_realtime(demo: bool = False):
     """Fetches the latest data from the backend and predicts landslide risk."""
     if not model:
         return {"status": "error", "message": "Model not loaded."}
@@ -105,15 +105,22 @@ def predict_realtime():
         latest_time = list(data.keys())[-1]
         latest_data = data[latest_time]
         
+        # Base sensor data
+        moisture = latest_data.get("soil_moisture_0_to_7cm", 0) * 100
+        rain = latest_data.get("precipitation", 0)
+        
+        # DEMO MODE OVERRIDE FOR JUDGES
+        if demo:
+            moisture = 95.5  # Extreme saturation
+            rain = 45.0      # Torrential downpour
+            
         # Map backend data to ML features
-        # Assuming IoT vibration/tilt aren't physically present yet, mock them with safe values
-        # or randomize slightly for demo purposes
         sensor_data = SensorData(
-            soil_moisture_pct=latest_data.get("soil_moisture_0_to_7cm", 0) * 100, # Convert fraction to percentage
-            rainfall_mm_hr=latest_data.get("precipitation", 0),
+            soil_moisture_pct=moisture,
+            rainfall_mm_hr=rain,
             temperature_C=latest_data.get("temperature_2m", 25.0),
-            vibration_index=0.1,  # Mock IoT vibration
-            tilt_deg=0.5,         # Mock IoT tilt
+            vibration_index=0.8 if demo else 0.1,  # Spike vibration in demo
+            tilt_deg=3.5 if demo else 0.5,         # Spike tilt in demo
             latitude=25.15,
             longitude=93.15
         )

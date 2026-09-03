@@ -40,13 +40,32 @@ const timestampEl = document.getElementById('timestamp');
 const riskCard = document.getElementById('risk-card');
 const alertCard = document.getElementById('alert-card');
 const smsAlert = document.getElementById('sms-alert');
+const demoBtn = document.getElementById('demo-btn');
+
+let isDemoMode = false;
+
+// Demo Button Logic
+demoBtn.addEventListener('click', () => {
+    isDemoMode = true;
+    demoBtn.innerText = "🚨 SIMULATING STORM...";
+    demoBtn.classList.add('blink');
+    
+    // Automatically turn off demo mode after 15 seconds
+    setTimeout(() => {
+        isDemoMode = false;
+        demoBtn.innerText = "⚠️ Run Demo Scenario";
+        demoBtn.classList.remove('blink');
+    }, 15000);
+});
 
 // Function to fetch real-time predictions from the ML Engine
 async function fetchRiskScore() {
     try {
-        // Fetch from ML Engine API (Ensure it is running on port 8001 and has CORS configured, or via relative path if proxied)
-        // Since we are running microservices, we will point directly to localhost for development
-        const response = await fetch('http://localhost:8001/api/predict-realtime');
+        const url = isDemoMode 
+            ? 'http://localhost:8001/api/predict-realtime?demo=true' 
+            : 'http://localhost:8001/api/predict-realtime';
+            
+        const response = await fetch(url);
         
         if (!response.ok) throw new Error('API Error');
         
