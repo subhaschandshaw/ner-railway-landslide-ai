@@ -1,5 +1,5 @@
 // Initialize the map centered on the Lumding-Badarpur Railway Section
-const map = L.map('map').setView([25.15, 93.15], 11);
+const map = L.map('map').setView([25.3, 93.0], 9);
 
 // Add Esri World Imagery (Satellite) tiles
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
@@ -7,13 +7,13 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
     attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
 }).addTo(map);
 
-// Define the railway track path (approximate coordinates for demonstration)
+// Define the railway track path (approximate coordinates between Lumding and Badarpur)
 const trackCoordinates = [
-    [25.10, 93.10],
-    [25.13, 93.13],
-    [25.15, 93.15],
-    [25.18, 93.18],
-    [25.20, 93.20]
+    [25.75, 93.17], // Lumding
+    [25.45, 93.16], // Midpoint 1
+    [25.15, 93.15], // Sensor Node (Hill Section)
+    [25.00, 92.80], // Midpoint 2
+    [24.89, 92.60]  // Badarpur
 ];
 
 // Draw the track polyline on the map
@@ -23,10 +23,15 @@ const railwayTrack = L.polyline(trackCoordinates, {
     opacity: 0.8
 }).addTo(map);
 
+// Add markers for the Stations
+L.marker([25.75, 93.17]).addTo(map).bindPopup('<b>Lumding Junction</b>').openPopup();
+L.marker([24.89, 92.60]).addTo(map).bindPopup('<b>Badarpur Junction</b>').openPopup();
+
 // Add a marker for the primary sensor node
 const sensorMarker = L.marker([25.15, 93.15]).addTo(map)
-    .bindPopup('<b>Primary Sensor Node</b><br>Lumding-Badarpur Hill Section')
+    .bindPopup('<b>Primary Sensor Node (Vulnerable Zone)</b><br>Lumding-Badarpur Hill Section')
     .openPopup();
+
 
 // DOM Elements
 const riskScoreEl = document.getElementById('risk-score');
