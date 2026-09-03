@@ -21,7 +21,7 @@ def get_pipeline_data():
     url = (
         f"https://api.open-meteo.com/v1/forecast"
         f"?latitude={LAT}&longitude={LON}"
-        f"&hourly=precipitation,soil_moisture_0_to_7cm,soil_moisture_7_to_28cm"
+        f"&hourly=precipitation,soil_moisture_0_to_7cm,soil_moisture_7_to_28cm,temperature_2m"
         f"&past_days=7"
     )
     

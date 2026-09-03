@@ -9,3 +9,21 @@ services:
       - PYTHONUNBUFFERED=1
     restart: always
 
+  ml-engine:
+    build: ./2-ml-engine
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - BACKEND_URL=http://backend-pipeline:8000
+    depends_on:
+      - backend-pipeline
+    restart: always
+
+  frontend-dashboard:
+    build: ./3-frontend-dashboard
+    ports:
+      - "8080:80"
+    depends_on:
+      - ml-engine
+    restart: always
