@@ -1,5 +1,10 @@
 // Initialize the map centered on the Lumding-Badarpur Railway Section
-const map = L.map('map').setView([25.3, 93.0], 9);
+const map = L.map('map', {
+    fullscreenControl: true,
+    fullscreenControlOptions: {
+        position: 'topleft'
+    }
+}).setView([25.3, 93.0], 9);
 
 // Add Esri World Imagery (Satellite) tiles
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
@@ -77,12 +82,19 @@ demoBtn.addEventListener('click', () => {
     demoBtn.classList.add('blink');
     logEvent("WARNING: STORM SIMULATION INITIATED BY USER", "WARN");
     
+    // Dynamically zoom in on the vulnerable sensor zone
+    map.flyTo([25.15, 93.15], 13, { animate: true, duration: 2 });
+    logEvent("Map auto-zooming to primary vulnerable node...", "WARN");
+    
     // Automatically turn off demo mode after 15 seconds
     setTimeout(() => {
         isDemoMode = false;
         demoBtn.innerText = "⚠️ Run Demo Scenario";
         demoBtn.classList.remove('blink');
         logEvent("Storm simulation ended. Returning to live telemetry.", "INFO");
+        
+        // Dynamically zoom out to full section view
+        map.flyTo([25.3, 93.0], 9, { animate: true, duration: 2 });
     }, 15000);
 });
 
