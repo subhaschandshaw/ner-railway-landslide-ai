@@ -128,8 +128,13 @@ def predict_realtime(demo: bool = False):
         # Call the existing prediction function
         prediction = predict_landslide(sensor_data)
         
-        # Add the timestamp to the response
+        # Add the timestamp and sensor readings to the response
         prediction["timestamp"] = latest_time
+        prediction["sensors"] = {
+            "rainfall_mm_hr": round(rain, 2),
+            "soil_moisture_pct": round(moisture, 2),
+            "temperature_C": round(sensor_data.temperature_C, 2)
+        }
         return prediction
         
     except Exception as e:

@@ -4,7 +4,12 @@ const map = L.map('map').setView([25.3, 93.0], 9);
 // Add Esri World Imagery (Satellite) tiles
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     maxZoom: 19,
-    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri'
+}).addTo(map);
+
+// Add Esri Reference Overlay (Roads & Labels) to make it look realistic
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19
 }).addTo(map);
 
 // Define the railway track path (approximate coordinates between Lumding and Badarpur)
@@ -18,20 +23,27 @@ const trackCoordinates = [
 
 // Draw the track polyline on the map
 const railwayTrack = L.polyline(trackCoordinates, {
-    color: 'green',
-    weight: 6,
-    opacity: 0.8
+    color: '#00ff00',
+    weight: 5,
+    opacity: 0.9,
+    dashArray: '10, 10'
 }).addTo(map);
 
 // Add markers for the Stations
-L.marker([25.75, 93.17]).addTo(map).bindPopup('<b>Lumding Junction</b>').openPopup();
-L.marker([24.89, 92.60]).addTo(map).bindPopup('<b>Badarpur Junction</b>').openPopup();
+const lumdingMarker = L.marker([25.75, 93.17]).addTo(map).bindPopup('<b>Lumding Junction</b>');
+const badarpurMarker = L.marker([24.89, 92.60]).addTo(map).bindPopup('<b>Badarpur Junction</b>');
 
-// Add a marker for the primary sensor node
+// Add a pulse circle for the primary sensor node
+const sensorRadius = L.circle([25.15, 93.15], {
+    color: 'green',
+    fillColor: '#00ff00',
+    fillOpacity: 0.2,
+    radius: 8000
+}).addTo(map);
+
 const sensorMarker = L.marker([25.15, 93.15]).addTo(map)
-    .bindPopup('<b>Primary Sensor Node (Vulnerable Zone)</b><br>Lumding-Badarpur Hill Section')
+    .bindPopup('<b>Primary Sensor Node (Vulnerable Zone)</b><br>Active Monitoring')
     .openPopup();
-
 
 // DOM Elements
 const riskScoreEl = document.getElementById('risk-score');
@@ -42,19 +54,35 @@ const alertCard = document.getElementById('alert-card');
 const smsAlert = document.getElementById('sms-alert');
 const demoBtn = document.getElementById('demo-btn');
 
+const sensorRainEl = document.getElementById('sensor-rain');
+const sensorSoilEl = document.getElementById('sensor-soil');
+const sensorTempEl = document.getElementById('sensor-temp');
+const eventLogEl = document.getElementById('event-log');
+
 let isDemoMode = false;
+let lastAlertLevel = null;
+
+function logEvent(message, type = "INFO") {
+    const time = new Date().toLocaleTimeString();
+    const div = document.createElement('div');
+    div.innerHTML = `[${time}] <span class="${type === 'CRITICAL' ? 'text-red-500 font-bold' : (type === 'WARN' ? 'text-yellow-400' : 'text-green-400')}">${message}</span>`;
+    eventLogEl.prepend(div);
+    if(eventLogEl.children.length > 50) eventLogEl.removeChild(eventLogEl.lastChild);
+}
 
 // Demo Button Logic
 demoBtn.addEventListener('click', () => {
     isDemoMode = true;
     demoBtn.innerText = "🚨 SIMULATING STORM...";
     demoBtn.classList.add('blink');
+    logEvent("WARNING: STORM SIMULATION INITIATED BY USER", "WARN");
     
     // Automatically turn off demo mode after 15 seconds
     setTimeout(() => {
         isDemoMode = false;
         demoBtn.innerText = "⚠️ Run Demo Scenario";
         demoBtn.classList.remove('blink');
+        logEvent("Storm simulation ended. Returning to live telemetry.", "INFO");
     }, 15000);
 });
 
@@ -86,10 +114,23 @@ function updateDashboard(data) {
     const score = data.risk_score_percent;
     const alertLevel = data.alert_level; // SAFE, WARNING, CRITICAL
     
+    // Update Sensors
+    if(data.sensors) {
+        sensorRainEl.innerText = `${data.sensors.rainfall_mm_hr} mm/hr`;
+        sensorSoilEl.innerText = `${data.sensors.soil_moisture_pct} %`;
+        sensorTempEl.innerText = `${data.sensors.temperature_C} °C`;
+    }
+    
     // Update Text
     riskScoreEl.innerText = `${score}%`;
     alertLevelEl.innerText = alertLevel;
     timestampEl.innerText = `Last Updated: ${new Date(data.timestamp).toLocaleString()}`;
+    
+    // Log state changes
+    if (lastAlertLevel !== alertLevel) {
+        logEvent(`Alert Level shifted from ${lastAlertLevel || 'BOOT'} to ${alertLevel}`, alertLevel);
+        lastAlertLevel = alertLevel;
+    }
     
     // Reset styles
     riskCard.className = 'bg-white p-6 rounded-lg shadow-sm border-l-4 transition-colors duration-300';
@@ -98,34 +139,29 @@ function updateDashboard(data) {
     
     // Apply styling based on alert level
     if (alertLevel === 'CRITICAL' || score >= 80) {
-        // Red / Critical State
         riskCard.classList.add('border-red-500');
         alertCard.classList.add('border-red-500');
-        alertLevelEl.classList.add('text-red-600');
+        alertLevelEl.className = 'text-3xl font-bold text-red-600';
         
-        // Change track color to red
         railwayTrack.setStyle({ color: 'red' });
-        
-        // Trigger automated SMS visual alert
+        sensorRadius.setStyle({ color: 'red', fillColor: '#ff0000' });
         smsAlert.classList.remove('hidden');
         
     } else if (alertLevel === 'WARNING' || score >= 40) {
-        // Yellow / Warning State
         riskCard.classList.add('border-yellow-500');
         alertCard.classList.add('border-yellow-500');
-        alertLevelEl.classList.add('text-yellow-600');
+        alertLevelEl.className = 'text-3xl font-bold text-yellow-600';
         
-        // Change track color to orange
         railwayTrack.setStyle({ color: 'orange' });
+        sensorRadius.setStyle({ color: 'orange', fillColor: '#ffa500' });
         
     } else {
-        // Green / Safe State
         riskCard.classList.add('border-green-500');
         alertCard.classList.add('border-green-500');
-        alertLevelEl.classList.add('text-green-600');
+        alertLevelEl.className = 'text-3xl font-bold text-green-600';
         
-        // Change track color back to green
-        railwayTrack.setStyle({ color: 'green' });
+        railwayTrack.setStyle({ color: '#00ff00' });
+        sensorRadius.setStyle({ color: 'green', fillColor: '#00ff00' });
     }
 }
 

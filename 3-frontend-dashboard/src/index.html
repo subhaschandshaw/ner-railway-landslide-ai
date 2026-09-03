@@ -55,28 +55,42 @@
 
             <!-- System Metrics Card -->
             <div class="bg-white p-6 rounded-lg shadow-sm">
-                <h2 class="text-lg font-semibold text-gray-600">Active Sensors</h2>
-                <ul class="mt-4 space-y-2 text-sm">
-                    <li class="flex justify-between">
-                        <span class="text-gray-500">Soil Moisture:</span>
-                        <span class="font-bold text-gray-700">Connected</span>
+                <h2 class="text-lg font-semibold text-gray-600">Active Sensors (Live)</h2>
+                <ul class="mt-4 space-y-3 text-sm">
+                    <li class="flex justify-between items-center border-b pb-2">
+                        <span class="text-gray-500">🌧️ Rainfall Rate:</span>
+                        <span class="font-bold text-blue-600" id="sensor-rain">-- mm/hr</span>
                     </li>
-                    <li class="flex justify-between">
-                        <span class="text-gray-500">Vibration / Tilt:</span>
-                        <span class="font-bold text-gray-700">Connected</span>
+                    <li class="flex justify-between items-center border-b pb-2">
+                        <span class="text-gray-500">💧 Soil Moisture:</span>
+                        <span class="font-bold text-amber-700" id="sensor-soil">-- %</span>
                     </li>
-                    <li class="flex justify-between">
-                        <span class="text-gray-500">Weather API:</span>
-                        <span class="font-bold text-green-600">Syncing (Open-Meteo)</span>
+                    <li class="flex justify-between items-center border-b pb-2">
+                        <span class="text-gray-500">🌡️ Temperature:</span>
+                        <span class="font-bold text-red-500" id="sensor-temp">-- °C</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="text-gray-500">📡 Connection:</span>
+                        <span class="font-bold text-green-600">Open-Meteo Synced</span>
                     </li>
                 </ul>
             </div>
         </div>
 
-        <!-- Map Section -->
-        <div class="bg-white p-6 rounded-lg shadow-sm">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">Live Track Status</h2>
-            <div id="map"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Map Section -->
+            <div class="bg-white p-6 rounded-lg shadow-sm lg:col-span-2">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Live Track Status (Satellite)</h2>
+                <div id="map"></div>
+            </div>
+
+            <!-- Event Log -->
+            <div class="bg-gray-900 text-green-400 p-6 rounded-lg shadow-sm font-mono text-sm overflow-hidden flex flex-col h-[480px]">
+                <h2 class="text-lg font-bold text-white mb-2 border-b border-gray-700 pb-2">>_ SYSTEM EVENT LOG</h2>
+                <div id="event-log" class="overflow-y-auto flex-1 space-y-1 mt-2 flex flex-col-reverse">
+                    <div>[SYS] Initialization complete. Waiting for sensor handshake...</div>
+                </div>
+            </div>
         </div>
     </div>
 
