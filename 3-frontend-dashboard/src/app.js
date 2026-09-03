@@ -1,10 +1,10 @@
 // Initialize the map centered on the Lumding-Badarpur Railway Section
 const map = L.map('map').setView([25.15, 93.15], 11);
 
-// Add OpenStreetMap tiles
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+// Add Esri World Imagery (Satellite) tiles
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     maxZoom: 19,
-    attribution: '© OpenStreetMap'
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
 }).addTo(map);
 
 // Define the railway track path (approximate coordinates for demonstration)
@@ -108,3 +108,4 @@ function updateDashboard(data) {
 // Start polling the API every 5 seconds
 fetchRiskScore();
 setInterval(fetchRiskScore, 5000);
+
