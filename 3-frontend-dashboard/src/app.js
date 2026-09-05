@@ -63,9 +63,18 @@ const sensorRainEl = document.getElementById('sensor-rain');
 const sensorSoilEl = document.getElementById('sensor-soil');
 const sensorTempEl = document.getElementById('sensor-temp');
 const eventLogEl = document.getElementById('event-log');
+const activeAlertsEl = document.getElementById('active-alerts');
+const activeAlertCountEl = document.getElementById('active-alert-count');
+const alertHistoryEl = document.getElementById('alert-history');
+const clearHistoryBtn = document.getElementById('clear-history-btn');
 
 let isDemoMode = false;
 let lastAlertLevel = null;
+let activeAlert = null;
+let alertHistory = JSON.parse(localStorage.getItem('landslide-alert-history') || '[]');
+
+const alertLocation = 'Lumding-Badarpur Railway Section, Assam';
+const alertCoordinates = '25.1500, 93.1500';
 
 function logEvent(message, type = "INFO") {
     const time = new Date().toLocaleTimeString();
@@ -74,6 +83,115 @@ function logEvent(message, type = "INFO") {
     eventLogEl.prepend(div);
     if(eventLogEl.children.length > 50) eventLogEl.removeChild(eventLogEl.lastChild);
 }
+
+function formatDateTime(value) {
+    return new Date(value).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function buildAlertDetails(data) {
+    const occurredAt = new Date().toISOString();
+    return {
+        id: `${occurredAt}-${Date.now()}`,
+        level: data.alert_level,
+        probability: data.risk_score_percent,
+        occurredAt,
+        location: alertLocation,
+        coordinates: alertCoordinates,
+        sensors: data.sensors || {}
+    };
+}
+
+function renderActiveAlerts() {
+    activeAlertCountEl.innerText = activeAlert ? '1 ACTIVE' : '0 ACTIVE';
+    if (!activeAlert) {
+        activeAlertsEl.innerHTML = '<p class="text-sm text-gray-500 py-4 text-center">No active alerts.</p>';
+        return;
+    }
+
+    const sensorText = `Rain ${activeAlert.sensors.rainfall_mm_hr ?? '--'} mm/hr | Soil ${activeAlert.sensors.soil_moisture_pct ?? '--'}% | Temp ${activeAlert.sensors.temperature_C ?? '--'}°C`;
+    const localFallbacks = activeAlert.level === 'CRITICAL'
+        ? {
+            assamese: 'লুমডিং-বদৰপুৰ ৰে\'লৱে ছেকচন, অসমত ভূমিস্খলনৰ গুৰুতৰ আশংকা আছে। ৰেলপথৰ ঢালৰ পৰা আঁতৰি থাকক আৰু চৰকাৰী নিৰ্দেশনা মানক।',
+            bengali: 'আসামের লুমডিং-বদরপুর রেলওয়ে সেকশনে গুরুতর ভূমিধসের ঝুঁকি রয়েছে। রেলপথের ঢাল থেকে দূরে থাকুন এবং সরকারি নির্দেশনা মেনে চলুন।',
+            hindi: 'असम के लुमडिंग-बदरपुर रेलवे सेक्शन में भूस्खलन का गंभीर खतरा है। रेलवे ढलान से दूर रहें और आधिकारिक निर्देशों का पालन करें।'
+        }
+        : {
+            assamese: 'লুমডিং-বদৰপুৰ ৰে\'লৱে ছেকচন, অসমত ভূমিস্খলনৰ আশংকা আছে। ৰেলপথৰ ঢালৰ পৰা আঁতৰি থাকক আৰু চৰকাৰী নিৰ্দেশনা মানক।',
+            bengali: 'আসামের লুমডিং-বদরপুর রেলওয়ে সেকশনে ভূমিধসের ঝুঁকি রয়েছে। রেলপথের ঢাল থেকে দূরে থাকুন এবং সরকারি নির্দেশনা মেনে চলুন।',
+            hindi: 'असम के लुमडिंग-बदरपुर रेलवे सेक्शन में भूस्खलन का खतरा है। रेलवे ढलान से दूर रहें और आधिकारिक निर्देशों का पालन करें।'
+        };
+    activeAlertsEl.innerHTML = `
+        <article class="border-l-4 border-red-500 bg-red-50 p-4 rounded-r">
+            <div class="flex justify-between gap-3">
+                <h3 class="font-bold text-red-800">Authority Alert · ${activeAlert.level}</h3>
+                <time class="text-xs text-red-700">${formatDateTime(activeAlert.occurredAt)}</time>
+            </div>
+            <p class="text-sm text-gray-800 mt-2">Landslide probability: <strong>${activeAlert.probability}%</strong></p>
+            <p class="text-xs text-gray-600 mt-1">${activeAlert.location} (${activeAlert.coordinates})</p>
+            <p class="text-xs text-gray-600 mt-1">Realtime data: ${sensorText}</p>
+        </article>
+        <article class="border-l-4 border-amber-500 bg-amber-50 p-4 rounded-r">
+            <div class="flex justify-between gap-3">
+                <h3 class="font-bold text-amber-800">Local Community Alert</h3>
+                <span class="text-xs text-amber-700">English · অসমীয়া · বাংলা · हिन्दी</span>
+            </div>
+            <p class="text-sm text-gray-800 mt-2"><strong>English:</strong> Landslide risk is ${activeAlert.level.toLowerCase()} near ${activeAlert.location}. Please stay away from the railway slope and follow official instructions.</p>
+            <p class="text-sm text-gray-800 mt-1"><strong>অসমীয়া:</strong> ${activeAlert.localMessages?.assamese || localFallbacks.assamese}</p>
+            <p class="text-sm text-gray-800 mt-1"><strong>বাংলা:</strong> ${activeAlert.localMessages?.bengali || localFallbacks.bengali}</p>
+            <p class="text-sm text-gray-800 mt-1"><strong>हिन्दी:</strong> ${activeAlert.localMessages?.hindi || localFallbacks.hindi}</p>
+        </article>`;
+}
+
+function renderHistory() {
+    clearHistoryBtn.disabled = alertHistory.length === 0;
+    clearHistoryBtn.classList.toggle('opacity-50', alertHistory.length === 0);
+    alertHistoryEl.innerHTML = alertHistory.length === 0
+        ? '<p class="text-sm text-gray-500 py-4 text-center">No alert history yet.</p>'
+        : alertHistory.map(item => `
+            <article class="border border-gray-200 p-3 rounded">
+                <div class="flex justify-between gap-3"><strong class="text-gray-800">${item.level} · ${item.probability}%</strong><time class="text-xs text-gray-500">${formatDateTime(item.occurredAt)}</time></div>
+                <p class="text-xs text-gray-600 mt-1">${item.location}</p>
+            </article>`).join('');
+}
+
+async function requestLocalTranslations(alert) {
+    try {
+        const response = await fetch('http://localhost:8000/api/translate-alert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ level: alert.level, location: alert.location })
+        });
+        if (response.ok) alert.localMessages = (await response.json()).translations;
+    } catch (error) {
+        console.warn('Translation service unavailable; using local fallback.', error);
+    }
+    renderActiveAlerts();
+}
+
+function beginAlert(data) {
+    activeAlert = buildAlertDetails(data);
+    renderActiveAlerts();
+    requestLocalTranslations(activeAlert);
+}
+
+function resolveAlert() {
+    if (!activeAlert) return;
+    alertHistory.unshift({ ...activeAlert, resolvedAt: new Date().toISOString() });
+    alertHistory = alertHistory.slice(0, 50);
+    localStorage.setItem('landslide-alert-history', JSON.stringify(alertHistory));
+    activeAlert = null;
+    renderActiveAlerts();
+    renderHistory();
+}
+
+clearHistoryBtn.addEventListener('click', () => {
+    alertHistory = [];
+    localStorage.removeItem('landslide-alert-history');
+    renderHistory();
+});
+
+renderHistory();
+renderActiveAlerts();
 
 // Demo Button Logic
 demoBtn.addEventListener('click', () => {
@@ -141,6 +259,8 @@ function updateDashboard(data) {
     // Log state changes
     if (lastAlertLevel !== alertLevel) {
         logEvent(`Alert Level shifted from ${lastAlertLevel || 'BOOT'} to ${alertLevel}`, alertLevel);
+        if (alertLevel === 'SAFE') resolveAlert();
+        else if (lastAlertLevel === null || lastAlertLevel === 'SAFE') beginAlert(data);
         lastAlertLevel = alertLevel;
     }
     

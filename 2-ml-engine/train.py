@@ -49,7 +49,7 @@ FEATURE_COLS = [
     "soil_moisture_sq",
     "combined_risk_index",
     "pore_pressure_proxy",
-    "shear_force_proxy"
+    "shear_force_proxy",
 ]
 
 

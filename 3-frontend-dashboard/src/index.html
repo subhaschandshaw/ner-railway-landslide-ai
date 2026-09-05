@@ -93,6 +93,35 @@
                 </div>
             </div>
         </div>
+
+        <!-- Alert messages and history -->
+        <section class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6" aria-label="Alert messages">
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+                <div class="flex items-center justify-between border-b pb-3 mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">Alert Messages</h2>
+                        <p class="text-sm text-gray-500">Live messages remain visible while an alert is active.</p>
+                    </div>
+                    <span id="active-alert-count" class="text-xs font-bold text-red-700 bg-red-100 px-3 py-1 rounded-full">0 ACTIVE</span>
+                </div>
+                <div id="active-alerts" class="space-y-4">
+                    <p class="text-sm text-gray-500 py-4 text-center">No active alerts.</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+                <div class="flex items-center justify-between border-b pb-3 mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">Alert History</h2>
+                        <p class="text-sm text-gray-500">Resolved alerts are archived here.</p>
+                    </div>
+                    <button id="clear-history-btn" class="text-xs font-bold text-gray-700 border border-gray-300 px-3 py-1 rounded hover:bg-gray-100" type="button">Delete all</button>
+                </div>
+                <div id="alert-history" class="space-y-3 max-h-80 overflow-y-auto">
+                    <p class="text-sm text-gray-500 py-4 text-center">No alert history yet.</p>
+                </div>
+            </div>
+        </section>
     </div>
 
     <!-- Leaflet JS -->
